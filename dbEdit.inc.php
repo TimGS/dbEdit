@@ -117,6 +117,45 @@ class dbEdit {
             $_SESSION['dbedit']['objects'][$this->uniqid]->conn = null;
         }
     }
+
+    /**
+     * Make a URL for the next dbEdit request
+     */
+    private function dbEdit_url($qsa, $html, $add_dbedit_handle = true) {
+    
+        if (is_null($qsa)) {
+            $qsa = array();
+        }
+    
+        if (strpos($_SERVER['REQUEST_URI'], '?') !== false) {
+            $url = strstr($_SERVER['REQUEST_URI'], '?', true);
+            $new_keys = array_keys($qsa);
+            $url_parts = explode('?', $_SERVER['REQUEST_URI']);
+            $qs_parts = explode('&', $url_parts[1]);
+            foreach($qs_parts as $qs_part) {
+                $name_value_pair = explode('=', $qs_part);
+                if (!in_array($name_value_pair[0], $new_keys) /* new query string parameters */ && !in_array($name_value_pair[0], array('a', 'id', 'updated', 'dbEdit')) /* reserved query string parameters */ ) {
+                    $qsa[$name_value_pair[0]] = $name_value_pair[1];
+                }
+            }
+        } else {
+            $url = $_SERVER['REQUEST_URI'];
+        }
+        
+        if ($add_dbedit_handle && !array_key_exists('dbEdit', $qsa)) {
+            $qsa['dbEdit'] = $this->uniqid;
+        }
+
+        if (sizeof($qsa)) {
+            $sep = '?';
+            foreach($qsa as $name => $value) {
+                $url .= $sep.$name.'='.rawurlencode($value);
+                $sep = $html ? '&amp;' : '&';
+            }
+        }
+        return $url;
+    }
+
     /** 
      * Set/retrieve data for use by the calling script (doesn't affect dbEdit itself)
      * 
@@ -275,7 +314,7 @@ class dbEdit {
                     $this->db_query("UPDATE {$this->table} SET ".implode(',', $fields)." WHERE {$this->primary} = {$id}".$this->sql_condition($this->allow_edit_sql_condition));
                 }
                 
-                header('Location: '.$_SERVER['PHP_SELF'].'?updated=1&dbedit='.$this->uniqid);
+                header('Location: '.$this->dbEdit_url(array('updated'=>'1'), false));
                 exit();
                 
             case 'i':
@@ -311,7 +350,7 @@ class dbEdit {
                     $this->db_query("INSERT INTO {$this->table} (".implode(',', $fields).') VALUES ('.implode(',', $values).')');
                 }
                 
-                header('Location: '.$_SERVER['PHP_SELF'].'?updated=1&dbedit='.$this->uniqid);
+                header('Location: '.$this->dbEdit_url(array('updated'=>'1'), false));
                 exit();
                 
             case 'v':
@@ -337,7 +376,7 @@ class dbEdit {
                                             ." FROM {$this->table}".($this->where ? ' WHERE '.$this->where : '').' ORDER BY '.($this->sql_order ? $this->sql_order : $this->primary.' ASC'));
                 while($row = $this->db_fetch($rs)) {
                     if ($this->allow_edit && (!$this->allow_edit_sql_condition || $row['dbEdit_allow_edit'])) {
-                        $output .= '<tr id="'.$attr_prefix.'row-'.$row[$this->primary].'" class="'.$attr_prefix.'editable" onclick="window.location.href=\''.$_SERVER['PHP_SELF'].'?a=e&amp;dbedit='.$this->uniqid.'&amp;id='.$row[$this->primary].'\'">';
+                        $output .= '<tr id="'.$attr_prefix.'row-'.$row[$this->primary].'" class="'.$attr_prefix.'editable" onclick="window.location.href=\''.$this->dbEdit_url(array('a'=>'e', 'id'=>$row[$this->primary]), true).'\'">';
                     } else {
                         $output .= '<tr id="'.$attr_prefix.'row-'.$row[$this->primary].'" class="'.$attr_prefix.'noteditable">';
                     }
@@ -346,7 +385,7 @@ class dbEdit {
                     }
                     if ($this->allow_del) {
                         if (!$this->allow_del_sql_condition || $row['dbEdit_allow_del']) {
-                            $output .= '<td class="'.$attr_prefix.'del-col"><a href="'.$_SERVER['PHP_SELF'].'?a=dc&amp;dbedit='.$this->uniqid.'&amp;id='.$row[$this->primary].'">Delete</a></td>';
+                            $output .= '<td class="'.$attr_prefix.'del-col"><a href="'.$this->dbEdit_url(array('a'=>'dc', 'id'=>$row[$this->primary]), true).'">Delete</a></td>';
                         } else {
                             $output .= '<td class="'.$attr_prefix.'del-col"></td>';
                         }
@@ -356,7 +395,7 @@ class dbEdit {
                 $output .= '</tbody></table>';
                 
                 if ($this->allow_add) {
-                    $output .= '<div class="'.$attr_prefix.'add"><a href="'.$_SERVER['PHP_SELF'].'?a=a&amp;dbedit='.$this->uniqid.'">Add</a></div>';
+                    $output .= '<div class="'.$attr_prefix.'add"><a href="'.$this->dbEdit_url(array('a'=>'a'), true).'">Add</a></div>';
                 }
 
                 break;
@@ -372,11 +411,11 @@ class dbEdit {
                         }
                     }
                     $output .= '</tbody></table>
-                    <form action="'.$_SERVER['PHP_SELF'].'" method="post">
+                    <form action="'.$this->dbEdit_url(null, true, false).'" method="post">
                         <input type="hidden" name="dbedit" value="'.$this->uniqid.'" />
                         <input type="hidden" name="id" value="'.$id.'" />
                         <button type="submit" name="a" value="d">Delete</button>
-                        <button type="submit" name="a" value="v" onclick="this.type=\'button\'; window.location.href=\''.$_SERVER['PHP_SELF'].'?dbedit='.$this->uniqid.'\';">Cancel</button>
+                        <button type="submit" name="a" value="v" onclick="this.type=\'button\'; window.location.href=\''.$this->dbEdit_url(null, true).'\';">Cancel</button>
                     </form>';
                 break;
             
@@ -385,7 +424,7 @@ class dbEdit {
                 if ($this->allow_del) {
                     $this->db_query("DELETE FROM {$this->table} WHERE {$this->primary} = {$id}".$this->sql_condition($this->allow_del_sql_condition));
                 }
-                header('Location: '.$_SERVER['PHP_SELF'].'?dbedit='.$this->uniqid);
+                header('Location: '.$this->dbEdit_url(null, false));
                 exit();
 
             case 'e':
@@ -399,7 +438,7 @@ class dbEdit {
                     }
                     $row = $this->db_fetch($this->db_query("SELECT *{$allow_edit_fields} FROM {$this->table} WHERE {$this->primary} = {$id}".$this->sql_condition($this->allow_edit_sql_condition)));
                     if ($row) {
-                        $output .= '<form id="'.$attr_prefix.'form" method="post" action="'.$_SERVER['PHP_SELF'].'"><fieldset>';
+                        $output .= '<form id="'.$attr_prefix.'form" method="post" action="'.$this->dbEdit_url(null, true, false).'"><fieldset>';
                         foreach($this->cols as $field => $col) {
                             if (!isset($col['constraint']) && !@$col['extra']) {
                                 $el_attr = $attr_prefix.$field;
@@ -434,7 +473,7 @@ class dbEdit {
                         <fieldset class="submit">
                             <button type="submit" id="'.$attr_prefix.'submit" name="a" value="p">Edit</button>
                             <button type="reset">Reset</button>
-                            <button type="submit" name="a" value="v" onclick="this.type=\'button\'; window.location.href=\''.$_SERVER['PHP_SELF'].'?dbedit='.$this->uniqid.'\';">Cancel</button>
+                            <button type="submit" name="a" value="v" onclick="this.type=\'button\'; window.location.href=\''.$this->dbEdit_url(null, true).'\';">Cancel</button>
                             <input type="hidden" name="dbedit" value="'.$this->uniqid.'" />
                             <input type="hidden" name="id" value="'.$id.'" />
                         </fieldset>
@@ -445,7 +484,7 @@ class dbEdit {
 
             case 'a':
             case 'add':
-                $output .= '<form id="'.$attr_prefix.'form" method="post" action="'.$_SERVER['PHP_SELF'].'"><fieldset>';
+                $output .= '<form id="'.$attr_prefix.'form" method="post" action="'.$this->dbEdit_url(null, true, false).'"><fieldset>';
                 foreach($this->cols as $field => $col) {
                     if (!isset($col['constraint']) && !@$col['extra']) {
                         $el_attr = $attr_prefix.$field;
@@ -478,7 +517,7 @@ class dbEdit {
                 '</fieldset>
                 <fieldset class="submit">
                     <button type="submit" name="a" value="i">Add</button>
-                    <button type="submit" name="a" value="v" onclick="this.type=\'button\'; window.location.href=\''.$_SERVER['PHP_SELF'].'?dbedit='.$this->uniqid.'\';">Cancel</button>
+                    <button type="submit" name="a" value="v" onclick="this.type=\'button\'; window.location.href=\''.$this->dbEdit_url(null, true).'\';">Cancel</button>
                     <input type="hidden" name="dbedit" value="'.$this->uniqid.'" />
                 </fieldset>
                 </form>';
