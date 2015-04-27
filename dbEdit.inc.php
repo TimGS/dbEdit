@@ -83,7 +83,9 @@ class dbEdit {
     private function output($row, $temp_field_suffix, $field, $col, $charset) {
         $output = '';
         if (!isset($col['constraint'])) {
+
             $output .= '<td>'.(@$col['bold'] ? '<strong>' : '');
+
             if (@$col['sql']) {
                 $output .= $this->html($row[$field.'_sql'.$temp_field_suffix], $charset, @$col['no_esc']);
             } elseif ($this->can_be_timestamp($col) && isset($col['date'])) {
@@ -97,7 +99,12 @@ class dbEdit {
                 } else {
                     $output .= $this->html($row[$field], $charset, @$col['no_esc']);
                 }
+            }
+
             $output .= (@$col['bold'] ? '</strong>' : '').'</td>';
+            
+            if (@$col['nl2br']) {
+                $output = nl2br($output);
             }
         }
         return $output;
