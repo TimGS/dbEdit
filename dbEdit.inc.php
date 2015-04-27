@@ -359,12 +359,29 @@ class dbEdit {
                     $output .= '<p class="'.$attr_prefix.'msg">Row updated</p>';
                 }
                 $output .= '<table id="'.$attr_prefix.'table"><thead><tr>';
+                $join_tables = array();
+                $join_conditions = array();
                 foreach($this->cols as $field => $col) {
                     if (!isset($col['constraint'])) {
                         $output .= '<th>'.($col['name'] ? $col['name'] : $field).'</th>';
                     }
+                    if (isset($col['tables'])) {
+                        foreach($col['tables'] as $join_table) {
+                            $join_tables[] = $join_table[0];
+                            $join_conditions[] = $join_table[1];
+                        }
+                    }
                 }
                 $sql_fields = $this->sql_fields($temp_field_suffix);
+                
+                // Table joins?
+                if (sizeof($join_tables)) {
+                    $tables = implode(',', array_merge(array($this->table), $join_tables));
+                    $where = ($this->where ? $this->where.' AND ' : '').implode(' AND ', $join_conditions);
+                } else {
+                    $tables = $this->table;
+                    $where = $this->where;
+                }
                 
                 if ($this->allow_del) {
                     $output .= '<th class="'.$attr_prefix.'del-col">Delete</th>';
@@ -373,7 +390,7 @@ class dbEdit {
                 $rs = $this->db_query('SELECT *'.($this->allow_del_sql_condition ? ", IF({$this->allow_del_sql_condition}, 1, 0) AS dbEdit_allow_del" : '')
                                                 .($this->allow_edit_sql_condition ? ", IF({$this->allow_edit_sql_condition}, 1, 0) AS dbEdit_allow_edit" : '')
                                                 .$sql_fields
-                                            ." FROM {$this->table}".($this->where ? ' WHERE '.$this->where : '').' ORDER BY '.($this->sql_order ? $this->sql_order : $this->primary.' ASC'));
+                                            ." FROM {$tables}".($where ? ' WHERE '.$where : '').' ORDER BY '.($this->sql_order ? $this->sql_order : $this->table.'.'.$this->primary.' ASC'));
                 while($row = $this->db_fetch($rs)) {
                     if ($this->allow_edit && (!$this->allow_edit_sql_condition || $row['dbEdit_allow_edit'])) {
                         $output .= '<tr id="'.$attr_prefix.'row-'.$row[$this->primary].'" class="'.$attr_prefix.'editable" onclick="window.location.href=\''.$this->dbEdit_url(array('a'=>'e', 'id'=>$row[$this->primary]), true).'\'">';
