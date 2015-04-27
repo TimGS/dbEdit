@@ -62,10 +62,21 @@ class dbEdit {
         $sql_fields = '';
         foreach($this->cols as $field => $col) {
             if (!isset($col['constraint'])) {
+                
+                if (strpos($field, '.') === false) {
+                    $origin_field = $this->table.'.'.$field;
+                    $return_field = $field;
+                } else {
+                    $origin_field = $field;
+                    $return_field = substr(strrchr($field, '.'), 1);
+                }
+                
                 if (isset($col['sql'])) {
-                    $sql_fields .= ", ({$col['sql']}) AS {$field}_sql{$temp_field_suffix}";
+                    $sql_fields .= ", ({$col['sql']}) AS {$return_field}_sql{$temp_field_suffix}";
                 } elseif ($this->can_be_timestamp($col) && isset($col['date'])) {
-                    $sql_fields .= ", UNIX_TIMESTAMP({$field}) AS {$field}_unixtime{$temp_field_suffix}";
+                    $sql_fields .= ", UNIX_TIMESTAMP({$origin_field}) AS {$return_field}_unixtime{$temp_field_suffix}";
+                } else {
+                    $sql_fields .= ", {$origin_field} AS {$return_field}";
                 }
             }
         }
@@ -86,18 +97,24 @@ class dbEdit {
 
             $output .= '<td>'.(@$col['bold'] ? '<strong>' : '');
 
+            if (strpos($field, '.') === false) {
+                $return_field = $field;
+            } else {
+                $return_field = substr(strrchr($field, '.'), 1);
+            }
+
             if (@$col['sql']) {
-                $output .= $this->html($row[$field.'_sql'.$temp_field_suffix], $charset, @$col['no_esc']);
+                $output .= $this->html($row[$return_field.'_sql'.$temp_field_suffix], $charset, @$col['no_esc']);
             } elseif ($this->can_be_timestamp($col) && isset($col['date'])) {
-                $output .= $this->html(date($col['date'], $row[$field.'_unixtime'.$temp_field_suffix]), $charset, @$col['no_esc']);
+                $output .= $this->html(date($col['date'], $row[$return_field.'_unixtime'.$temp_field_suffix]), $charset, @$col['no_esc']);
             } else {
                 if (@$col['type'] == 'checkbox') {
-                    $output .= $col['checkbox_value_html'][$row[$field]];
+                    $output .= $col['checkbox_value_html'][$row[$return_field]];
                 } elseif (@$col['dropdown']) {
                     $flip = array_flip($col['dropdown']);
-                    $output .= $this->html($flip[$row[$field]], $charset, @$col['no_esc']);
+                    $output .= $this->html($flip[$row[$return_field]], $charset, @$col['no_esc']);
                 } else {
-                    $output .= $this->html($row[$field], $charset, @$col['no_esc']);
+                    $output .= $this->html($row[$return_field], $charset, @$col['no_esc']);
                 }
             }
 
@@ -373,8 +390,8 @@ class dbEdit {
                         $output .= '<th>'.($col['name'] ? $col['name'] : $field).'</th>';
                     }
                     if (isset($col['tables'])) {
-                        foreach($col['tables'] as $join_table) {
-                            $join_tables[] = $join_table[0];
+                        foreach($col['tables'] as $join_table) { // table, join condition, optional table alias
+                            $join_tables[] = $join_table[0].(isset($join_table[2]) ? ' AS '.$join_table[2] : '');
                             $join_conditions[] = $join_table[1];
                         }
                     }
@@ -394,7 +411,7 @@ class dbEdit {
                     $output .= '<th class="'.$attr_prefix.'del-col">Delete</th>';
                 }
                 $output .= '</tr></thead><tbody>';
-                $rs = $this->db_query('SELECT *'.($this->allow_del_sql_condition ? ", IF({$this->allow_del_sql_condition}, 1, 0) AS dbEdit_allow_del" : '')
+                $rs = $this->db_query('SELECT '.$this->table.'.'.$this->primary.' AS dbEdit_primary_key'.($this->allow_del_sql_condition ? ", IF({$this->allow_del_sql_condition}, 1, 0) AS dbEdit_allow_del" : '')
                                                 .($this->allow_edit_sql_condition ? ", IF({$this->allow_edit_sql_condition}, 1, 0) AS dbEdit_allow_edit" : '')
                                                 .$sql_fields
                                             ." FROM {$tables}".($where ? ' WHERE '.$where : '').' ORDER BY '.($this->sql_order ? $this->sql_order : $this->table.'.'.$this->primary.' ASC'));
