@@ -390,9 +390,15 @@ class dbEdit {
                         $output .= '<th>'.($col['name'] ? $col['name'] : $field).'</th>';
                     }
                     if (isset($col['tables'])) {
-                        foreach($col['tables'] as $join_table) { // table, join condition, optional table alias
-                            $join_tables[] = $join_table[0].(isset($join_table[2]) ? ' AS '.$join_table[2] : '');
-                            $join_conditions[] = $join_table[1];
+                        foreach($col['tables'] as $join_table) { // table, join condition, optional table alias, optional join type (INNER, LEFT, RIGHT - default INNER)
+                            $join = (@$join_table[3] ? $join_table[3] : 'INNER').' JOIN '.$join_table[0].(@$join_table[2] ? ' AS '.$join_table[2] : '');
+                            if ($join_table[3]) {
+                                $join_tables[] = $join.' ON '.$join_table[1]; // ON (LEFT/RIGHT JOIN)
+                            } else {
+                                $join_tables[] = $join;
+                                $join_conditions[] = $join_table[1]; // WHERE/AND (JOIN)
+                            }
+                            // <<<< todo - avoid duplicate joins
                         }
                     }
                 }
@@ -400,7 +406,10 @@ class dbEdit {
                 
                 // Table joins?
                 if (sizeof($join_tables)) {
-                    $tables = implode(',', array_merge(array($this->table), $join_tables));
+                    $tables = $this->table;
+                    foreach($join_tables as $join_table) {
+                        $tables .= ' '.$join_table;
+                    }
                     $where = ($this->where ? $this->where.' AND ' : '').implode(' AND ', $join_conditions);
                 } else {
                     $tables = $this->table;
