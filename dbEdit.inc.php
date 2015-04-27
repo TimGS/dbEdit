@@ -117,12 +117,12 @@ class dbEdit {
             $_SESSION['dbedit']['objects'][$this->uniqid]->conn = null;
         }
     }
-
     /** 
-     * Set/retrieve date for use by the calling script.
+     * Set/retrieve data for use by the calling script (doesn't affect dbEdit itself)
      * 
-     * Calling scripts should use this method to set data when a new dbEdit object is created.
-     * and to retrieve it later. e.g.
+     * Calling scripts should use this method to set data for use by the calling script when
+     * a new dbEdit object is created and to retrieve it later on subsequent page loads, 
+     * e.g.
      *      $editor->Param('sql', 'SELECT * FROM mchAdverts WHERE advertID = '.@$get['id']);
      * ...will set the 'sql' parameter during the script execution when a new dbEdit is created,
      * but will return this original value during later requests involving the same object.
