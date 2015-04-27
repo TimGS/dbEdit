@@ -1,0 +1,86 @@
+#dbEditPrefixtable th {
+    padding: 0.5em;
+    font-weight: bold;
+    text-transform: none;
+    }
+
+#dbEditPrefixtable td {
+    padding: 0.5em;
+    text-transform: none !important;
+    }
+
+#dbEditPrefixtable > tbody > tr.dbEditPrefixnoteditable td {
+    color: #777;
+    }
+
+#dbEditPrefixtable > tbody > tr.dbEditPrefixeditable:hover {
+    cursor: pointer;
+    background: #eee;
+    }
+
+#dbEditPrefixform {
+    max-width: 580px;
+    margin: 15px 0 0 0;
+    border: solid 1px #999;
+    padding: 10px;
+    }
+
+#dbEditPrefixform * {
+    font-size: 100%;
+    font-family: inherit;
+    }
+
+#dbEditPrefixform > div {
+    margin: 1em 0;
+    clear: left;
+    }
+    
+#dbEditPrefixform label {
+    float: left;
+    width: 110px;
+    margin-bottom: 1em;
+    text-align: right;
+    font-weight: bold;
+    }
+    
+#dbEditPrefixform input, #dbEditPrefixform textarea, #dbEditPrefixform select {
+    display: inline;
+    margin-left: 15px;
+    }
+#dbEditPrefixform input[type=text], #dbEditPrefixform textarea { 
+    width: 400px;
+    }
+
+#dbEditPrefixform input.date,
+#dbEditPrefixform input[type=date],
+#dbEditPrefixform input.time,
+#dbEditPrefixform input[type=time] {
+    width: 7em;
+    }
+
+#dbEditPrefixform input.datetime,
+#dbEditPrefixform input[type=datetime] {
+    width: 12em;
+    }
+
+ #dbEditPrefixform select {
+    max-width: 400px;
+    }
+
+#dbEditPrefixform fieldset.submit button:first-child {
+    margin-left: 125px; /* label width + 'normal' input margin */
+    }
+    
+#dbEditPrefixform fieldset.submit button {
+    padding: 0.15em 1em;
+    width: auto;
+    }
+
+#dbEditPrefixform p { /* notes */
+    clear: left;
+    margin: 1em 0 1em 125px;
+    }
+
+.dbEditPrefixadd {
+    padding: 0.5em;
+    }

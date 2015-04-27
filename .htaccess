@@ -1,0 +1,8 @@
+<FilesMatch "dbEdit.css(.php)?">
+	Order deny,allow
+	Allow from all
+</FilesMatch>
+
+RewriteEngine On
+RewriteBase /includes/classes/dbEdit/
+RewriteRule dbEdit.css dbEdit.css.php
