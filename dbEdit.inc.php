@@ -95,8 +95,6 @@ class dbEdit {
         $output = '';
         if (!isset($col['constraint'])) {
 
-            $output .= '<td>'.(@$col['bold'] ? '<strong>' : '');
-
             if (strpos($field, '.') === false) {
                 $return_field = $field;
             } else {
@@ -118,13 +116,15 @@ class dbEdit {
                 }
             }
 
-            $output .= (@$col['bold'] ? '</strong>' : '').'</td>';
-            
+            if (@$col['trim']) {
+                $output = trim($output);
+            }
+
             if (@$col['nl2br']) {
                 $output = nl2br($output);
             }
         }
-        return $output;
+        return '<td>'.($col['bold'] ? '<strong>'.$output.'</strong>' : $output).'</td>';
     }
     
     /**
