@@ -58,10 +58,10 @@ class dbEdit {
         return (@$col['type'] == 'date' || @$col['type'] == 'datetime');
     }
 
-    private function sql_fields($temp_field_suffix) {
+    private function sql_fields($temp_field_suffix, $include_joins) {
         $sql_fields = '';
         foreach($this->cols as $field => $col) {
-            if (!isset($col['constraint'])) {
+            if (!isset($col['constraint']) && (!isset($col['tables']) || $include_joins)) {
                 
                 if (strpos($field, '.') === false) {
                     $origin_field = $this->table.'.'.$field;
@@ -402,7 +402,7 @@ class dbEdit {
                         }
                     }
                 }
-                $sql_fields = $this->sql_fields($temp_field_suffix);
+                $sql_fields = $this->sql_fields($temp_field_suffix, true);
                 
                 // Table joins?
                 if (sizeof($join_tables)) {
@@ -435,7 +435,7 @@ class dbEdit {
                     }
                     if ($this->allow_del) {
                         if (!$this->allow_del_sql_condition || $row['dbEdit_allow_del']) {
-                            $output .= '<td class="'.$attr_prefix.'del-col"><a href="'.$this->dbEdit_url(array('a'=>'dc', 'id'=>$row[$this->primary]), true).'">Delete</a></td>';
+                            $output .= '<td class="'.$attr_prefix.'del-col"><a href="'.$this->dbEdit_url(array('a'=>'dc', 'id'=>$row['dbEdit_primary_key']), true).'">Delete</a></td>';
                         } else {
                             $output .= '<td class="'.$attr_prefix.'del-col"></td>';
                         }
@@ -452,11 +452,11 @@ class dbEdit {
 
             case 'dc':
             case 'deleteconfirm':
-                    $sql_fields = $this->sql_fields($temp_field_suffix);
+                    $sql_fields = $this->sql_fields($temp_field_suffix, false);
                     $row = $this->db_fetch($this->db_query("SELECT *{$sql_fields} FROM {$this->table} WHERE {$this->primary} = {$id}".$this->sql_condition($this->allow_del_sql_condition)));
                     $output .= '<table id="'.$attr_prefix.'table"><tbody>';
                     foreach($this->cols as $field => $col) {
-                        if (!@$col['constraint']) {
+                        if (!isset($col['constraint']) && (!isset($col['tables']) || $include_joins)) {
                             $output .= "<tr><td>{$col['name']}</td><td>{$this->output($row, $temp_field_suffix, $field, $col, $charset)}</td></tr>";
                         }
                     }
