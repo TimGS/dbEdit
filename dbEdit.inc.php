@@ -93,6 +93,7 @@ class dbEdit {
 
     private function output($row, $temp_field_suffix, $field, $col, $charset) {
         $output = '';
+        $is_date = false;
         if (!isset($col['constraint'])) {
 
             if (strpos($field, '.') === false) {
@@ -105,6 +106,7 @@ class dbEdit {
                 $output .= $this->html($row[$return_field.'_sql'.$temp_field_suffix], $charset, @$col['no_esc']);
             } elseif ($this->can_be_timestamp($col) && isset($col['date'])) {
                 $output .= $this->html(date($col['date'], $row[$return_field.'_unixtime'.$temp_field_suffix]), $charset, @$col['no_esc']);
+                $is_date = true;
             } else {
                 if (@$col['type'] == 'checkbox') {
                     $output .= $col['checkbox_value_html'][$row[$return_field]];
@@ -124,7 +126,7 @@ class dbEdit {
                 $output = nl2br($output);
             }
         }
-        return '<td>'.($col['bold'] ? '<strong>'.$output.'</strong>' : $output).'</td>';
+        return '<td'.($is_date ? ' data-order="'.$this->html($row[$return_field.'_unixtime'.$temp_field_suffix], $charset).'"' : '').'>'.($col['bold'] ? '<strong>'.$output.'</strong>' : $output).'</td>';
     }
     
     /**
