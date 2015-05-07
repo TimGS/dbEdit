@@ -13,6 +13,7 @@ class dbEdit {
     private $sql_order; // SQL for ordering in table (default to primary key ascending)
     
     public  $action_param = 'a'; // request parameter used to denote action
+    public  $query_string = '';  // This query string will be used in all URLs - intended for use when frameworks need a query string to direct to dbEdit
     
     private $allow_add = false;  // Can we add rows?
     private $allow_del = false;  // Can we delete rows?
@@ -174,13 +175,21 @@ class dbEdit {
             $qsa['dbEdit'] = $this->uniqid;
         }
 
+        $sep = '?';
         if (sizeof($qsa)) {
-            $sep = '?';
             foreach($qsa as $name => $value) {
                 $url .= $sep.$name.'='.rawurlencode($value);
                 $sep = $html ? '&amp;' : '&';
             }
         }
+        
+        if ($this->query_string) {
+            if ($this->query_string[0] == '&') {
+                $this->query_string = substr($this->query_string, 1);
+            }
+            $url .= $sep.$this->query_string;
+        }
+        
         return $url;
     }
 
