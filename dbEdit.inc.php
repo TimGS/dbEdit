@@ -487,7 +487,7 @@ class dbEdit {
                 if ($this->allow_edit) {
                     $allow_edit_fields = '';
                     foreach($this->cols as $field => $col) {
-                        if (@$col['allow_edit']) {
+                        if (isset($col['allow_edit'])) {
                             $allow_edit_fields .= ", ({$col['allow_edit']}) AS allow_edit_of_{$field}{$temp_field_suffix}";
                         }
                     }
