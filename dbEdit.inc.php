@@ -12,6 +12,7 @@ class dbEdit {
     private $atime;   // When the editor was last used
     private $sql_order; // SQL for ordering in table (default to primary key ascending)
     
+    public  $id_param     = 'id';// request parameter used to denote the record id
     public  $action_param = 'a'; // request parameter used to denote action
     public  $query_string = '';  // This query string will be used in all URLs - intended for use when frameworks need a query string to direct to dbEdit
     
@@ -163,7 +164,7 @@ class dbEdit {
             $qs_parts = explode('&', $url_parts[1]);
             foreach($qs_parts as $qs_part) {
                 $name_value_pair = explode('=', $qs_part);
-                if (!in_array($name_value_pair[0], $new_keys) /* new query string parameters */ && !in_array($name_value_pair[0], array($this->action_param, 'id', 'updated', 'dbEdit')) /* reserved query string parameters */ ) {
+                if (!in_array($name_value_pair[0], $new_keys) /* new query string parameters */ && !in_array($name_value_pair[0], array($this->action_param, $this->id_param, 'updated', 'dbEdit')) /* reserved query string parameters */ ) {
                     $qsa[$name_value_pair[0]] = $name_value_pair[1];
                 }
             }
@@ -309,8 +310,8 @@ class dbEdit {
             $a = @$_REQUEST[$this->action_param] ? $_REQUEST[$this->action_param] : 'v';
         }
         
-        if (!$id && @$_REQUEST['id']) {
-            $id =  $_REQUEST['id'];
+        if (!$id && @$_REQUEST[$this->id_param]) {
+            $id =  $_REQUEST[$this->id_param];
         }
         if ($id && !ctype_digit($id)) {
             $id = null;
@@ -439,7 +440,7 @@ class dbEdit {
                                             ." FROM {$tables}".($where ? ' WHERE '.$where : '').' ORDER BY '.($this->sql_order ? $this->sql_order : $this->table.'.'.$this->primary.' ASC'));
                 while($row = $this->db_fetch($rs)) {
                     if ($this->allow_edit && (!$this->allow_edit_sql_condition || $row['dbEdit_allow_edit'])) {
-                        $output .= '<tr id="'.$attr_prefix.'row-'.$row[$this->primary].'" class="'.$attr_prefix.'editable" onclick="window.location.href=\''.$this->dbEdit_url(array($this->action_param=>'e', 'id'=>$row[$this->primary]), true).'\'">';
+                        $output .= '<tr id="'.$attr_prefix.'row-'.$row[$this->primary].'" class="'.$attr_prefix.'editable" onclick="window.location.href=\''.$this->dbEdit_url(array($this->action_param=>'e', $this->id_param=>$row[$this->primary]), true).'\'">';
                     } else {
                         $output .= '<tr id="'.$attr_prefix.'row-'.$row[$this->primary].'" class="'.$attr_prefix.'noteditable">';
                     }
@@ -448,7 +449,7 @@ class dbEdit {
                     }
                     if ($this->allow_del) {
                         if (!$this->allow_del_sql_condition || $row['dbEdit_allow_del']) {
-                            $output .= '<td class="'.$attr_prefix.'del-col"><a href="'.$this->dbEdit_url(array($this->action_param=>'dc', 'id'=>$row['dbEdit_primary_key']), true).'">Delete</a></td>';
+                            $output .= '<td class="'.$attr_prefix.'del-col"><a href="'.$this->dbEdit_url(array($this->action_param=>'dc', $this->id_param=>$row['dbEdit_primary_key']), true).'">Delete</a></td>';
                         } else {
                             $output .= '<td class="'.$attr_prefix.'del-col"></td>';
                         }
@@ -476,7 +477,7 @@ class dbEdit {
                     $output .= '</tbody></table>
                     <form action="'.$this->dbEdit_url(null, true, false).'" method="post">
                         <input type="hidden" name="dbedit" value="'.$this->uniqid.'" />
-                        <input type="hidden" name="id" value="'.$id.'" />
+                        <input type="hidden" name="'.$this->id_param.'" value="'.$id.'" />
                         <button type="submit" name="'.$this->action_param.'" value="d">Delete</button>
                         <button type="submit" name="'.$this->action_param.'" value="v" onclick="this.type=\'button\'; window.location.href=\''.$this->dbEdit_url(null, true).'\';">Cancel</button>
                     </form>';
@@ -538,7 +539,7 @@ class dbEdit {
                             <button type="reset">Reset</button>
                             <button type="submit" name="'.$this->action_param.'" value="v" onclick="this.type=\'button\'; window.location.href=\''.$this->dbEdit_url(null, true).'\';">Cancel</button>
                             <input type="hidden" name="dbedit" value="'.$this->uniqid.'" />
-                            <input type="hidden" name="id" value="'.$id.'" />
+                            <input type="hidden" name="'.$this->id_param.'" value="'.$id.'" />
                         </fieldset>
                         </form>';
                     }
