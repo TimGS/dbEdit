@@ -625,3 +625,7 @@ class dbEdit {
     }
 
 }
+
+// <<<< TODO
+// allow_edit (per col) to be checked for 'p' and 'e'
+//
