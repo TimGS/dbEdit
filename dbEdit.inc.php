@@ -431,9 +431,9 @@ class dbEdit {
                                             ." FROM {$tables}".($where ? ' WHERE '.$where : '').' ORDER BY '.($this->sql_order ? $this->sql_order : $this->table.'.'.$this->primary.' ASC'));
                 while($row = $this->db_fetch($rs)) {
                     if ($this->allow_edit && (!$this->allow_edit_sql_condition || $row['dbEdit_allow_edit'])) {
-                        $output .= '<tr id="'.$attr_prefix.'row-'.$row[$this->primary].'" class="'.$attr_prefix.'editable" onclick="window.location.href=\''.$this->dbEdit_url(array($this->action_param=>'e', $this->id_param=>$row[$this->primary]), true).'\'">';
+                        $output .= '<tr id="'.$attr_prefix.'row-'.$row['dbEdit_primary_key'].'" class="'.$attr_prefix.'editable" onclick="window.location.href=\''.$this->dbEdit_url(array($this->action_param=>'e', $this->id_param=>$row['dbEdit_primary_key']), true).'\'">';
                     } else {
-                        $output .= '<tr id="'.$attr_prefix.'row-'.$row[$this->primary].'" class="'.$attr_prefix.'noteditable">';
+                        $output .= '<tr id="'.$attr_prefix.'row-'.$row['dbEdit_primary_key'].'" class="'.$attr_prefix.'noteditable">';
                     }
                     foreach($this->cols as $field => $col) {
                         $output .= $this->output($row, $temp_field_suffix, $field, $col, $charset);
