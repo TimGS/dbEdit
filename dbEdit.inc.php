@@ -105,23 +105,32 @@ class dbEdit {
                 $return_field = substr(strrchr($field, '.'), 1);
             }
 
+            $no_esc = @$col['no_esc'];
+
             if (@$col['php']) {
-                $output .= $this->html(call_user_func($col['php'], $row['dbEdit_primary_key'], $row, $temp_field_suffix, $field, $col, $charset), $charset, @$col['no_esc']);
+                $output1 = call_user_func($col['php'], $row['dbEdit_primary_key'], $row, $temp_field_suffix, $field, $col, $charset);
             } elseif (@$col['sql']) {
-                $output .= $this->html($row[$return_field.'_sql'.$temp_field_suffix], $charset, @$col['no_esc']);
+                $output1 = $row[$return_field.'_sql'.$temp_field_suffix];
             } elseif ($this->can_be_timestamp($col) && isset($col['date'])) {
-                $output .= $this->html(date($col['date'], $row[$return_field.'_unixtime'.$temp_field_suffix]), $charset, @$col['no_esc']);
+                $output1 = date($col['date'], $row[$return_field.'_unixtime'.$temp_field_suffix]);
                 $is_date = true;
             } else {
                 if (@$col['type'] == 'checkbox') {
-                    $output .= $col['checkbox_value_html'][$row[$return_field]];
+                    $output1 = $col['checkbox_value_html'][$row[$return_field]];
+                    $no_esc = true;
                 } elseif (@$col['dropdown']) {
                     $flip = array_flip($col['dropdown']);
-                    $output .= $this->html($flip[$row[$return_field]], $charset, @$col['no_esc']);
+                    $output1 = $flip[$row[$return_field]];
                 } else {
-                    $output .= $this->html($row[$return_field], $charset, @$col['no_esc']);
+                    $output1 = $row[$return_field];
                 }
             }
+            
+            if (@$col['php_after']) {
+                $output1 = call_user_func($col['php_after'], $output1, $row['dbEdit_primary_key'], $row, $temp_field_suffix, $field, $col, $charset);
+            }
+            
+            $output = $this->html($output1, $charset, $no_esc);
 
             if (@$col['trim']) {
                 $output = trim($output);
