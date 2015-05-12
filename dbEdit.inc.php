@@ -105,7 +105,9 @@ class dbEdit {
                 $return_field = substr(strrchr($field, '.'), 1);
             }
 
-            if (@$col['sql']) {
+            if (@$col['php']) {
+                $output .= $this->html(call_user_func($col['php'], $row['dbEdit_primary_key'], $row, $temp_field_suffix, $field, $col, $charset), $charset, @$col['no_esc']);
+            } elseif (@$col['sql']) {
                 $output .= $this->html($row[$return_field.'_sql'.$temp_field_suffix], $charset, @$col['no_esc']);
             } elseif ($this->can_be_timestamp($col) && isset($col['date'])) {
                 $output .= $this->html(date($col['date'], $row[$return_field.'_unixtime'.$temp_field_suffix]), $charset, @$col['no_esc']);
