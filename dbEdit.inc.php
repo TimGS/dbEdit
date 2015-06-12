@@ -174,6 +174,7 @@ class dbEdit {
             $qs_parts = explode('&', $url_parts[1]);
             foreach($qs_parts as $qs_part) {
                 $name_value_pair = explode('=', $qs_part);
+                $name_value_pair[1] = urldecode($name_value_pair[1]);
                 if (!in_array($name_value_pair[0], $new_keys) /* new query string parameters */ && !in_array($name_value_pair[0], array($this->action_param, $this->id_param, 'updated', 'dbEdit')) /* reserved query string parameters */ ) {
                     $qsa[$name_value_pair[0]] = $name_value_pair[1];
                 }
