@@ -22,6 +22,9 @@ class dbEdit {
     private $allow_del_sql_condition; // If not null, a row must satisfy this condition to be able to be deleted.
     private $allow_edit_sql_condition; // If not null, a row must satisfy this condition to be able to be edited.
     
+    public  $delete_header_html = 'Delete'; // For view list <th>
+    public  $delete_html        = 'Delete'; // For view list <td>
+
     function __construct($dbapi, $conn, $table, $primary, $cols, $where = null) {
         if ($dbapi != 'mysqli') {
             exit('This version of the dbEdit class only supports mysqli.');
@@ -434,7 +437,7 @@ class dbEdit {
                 }
                 
                 if ($this->allow_del) {
-                    $output .= '<th class="'.$attr_prefix.'del-col">Delete</th>';
+                    $output .= '<th class="'.$attr_prefix.'del-col">'.$this->delete_header_html.'</th>';
                 }
                 $output .= '</tr></thead><tbody>';
                 $rs = $this->db_query('SELECT '.$this->table.'.'.$this->primary.' AS dbEdit_primary_key'.($this->allow_del_sql_condition ? ", IF({$this->allow_del_sql_condition}, 1, 0) AS dbEdit_allow_del" : '')
@@ -452,7 +455,7 @@ class dbEdit {
                     }
                     if ($this->allow_del) {
                         if (!$this->allow_del_sql_condition || $row['dbEdit_allow_del']) {
-                            $output .= '<td class="'.$attr_prefix.'del-col"><a href="'.$this->dbEdit_url(array($this->action_param=>'dc', $this->id_param=>$row['dbEdit_primary_key']), true).'">Delete</a></td>';
+                            $output .= '<td class="'.$attr_prefix.'del-col"><a href="'.$this->dbEdit_url(array($this->action_param=>'dc', $this->id_param=>$row['dbEdit_primary_key']), true).'">'.$this->delete_html.'</a></td>';
                         } else {
                             $output .= '<td class="'.$attr_prefix.'del-col"></td>';
                         }
