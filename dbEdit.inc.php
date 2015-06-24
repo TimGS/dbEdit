@@ -178,7 +178,7 @@ class dbEdit {
             foreach($qs_parts as $qs_part) {
                 $name_value_pair = explode('=', $qs_part);
                 $name_value_pair[1] = urldecode($name_value_pair[1]);
-                if (!in_array($name_value_pair[0], $new_keys) /* new query string parameters */ && !in_array($name_value_pair[0], array($this->action_param, $this->id_param, 'updated', 'dbEdit')) /* reserved query string parameters */ ) {
+                if (!in_array($name_value_pair[0], $new_keys) /* new query string parameters */ && !in_array($name_value_pair[0], array($this->action_param, $this->id_param, 'updated', 'dbedit')) /* reserved query string parameters */ ) {
                     $qsa[$name_value_pair[0]] = $name_value_pair[1];
                 }
             }
@@ -186,8 +186,8 @@ class dbEdit {
             $url = $_SERVER['REQUEST_URI'];
         }
         
-        if ($add_dbedit_handle && !array_key_exists('dbEdit', $qsa)) {
-            $qsa['dbEdit'] = $this->uniqid;
+        if ($add_dbedit_handle && !array_key_exists('dbedit', $qsa)) {
+            $qsa['dbedit'] = $this->uniqid;
         }
 
         if (sizeof($qsa)) {
