@@ -340,7 +340,7 @@ class dbEdit {
                         $post_field = substr($name, strlen($attr_prefix));
                         if (isset($this->cols[$post_field])) {
                             if (@$this->cols[$post_field]['type'] == 'checkbox') {
-                                $fields[] = $post_field.'=1';
+                                $fields[] = $post_field.'='.($value ? '1' : '0'); // Allows hidden input in lieu of disabled checkbox
                             } else {
                                 $fields[] = $post_field.'="'.$this->db_escape($value).'"';
                             }
@@ -502,7 +502,7 @@ class dbEdit {
                 if ($this->allow_edit) {
                     $allow_edit_fields = '';
                     foreach($this->cols as $field => $col) {
-                        if (isset($col['allow_edit'])) {
+                        if (isset($col['allow_edit'])) { // WARNING: column restriction currently insecure; relies on only trusted users being able to edit.
                             $allow_edit_fields .= ", ({$col['allow_edit']}) AS allow_edit_of_{$field}{$temp_field_suffix}";
                         }
                     }
@@ -520,7 +520,8 @@ class dbEdit {
                                     $output .= '<textarea id="'.$el_attr.'" name="'.$el_attr.'" rows="'.$col['textarea']['rows'].'" cols="'.$col['textarea']['cols'].'">'.$this->html($row[$field], $charset).'</textarea>';
                                 } elseif (@$col['type'] == 'checkbox') {
                                     $classes = isset($col['input_classes']) ? $col['input_classes'] : array();
-                                    $output .= '<input '.$disabled.'type="checkbox" id="'.$el_attr.'" name="'.$el_attr.'" '.(sizeof($classes) ? 'class="'.implode(' ', $classes).'" ' : '').'value="1" '.($row[$field] ? 'checked="checked" ' : '').'/>';
+                                    $output .= '<input '.$disabled.'type="checkbox" id="'.$el_attr.'-disabled-checkbox" name="'.$el_attr.'-disabled-checkbox" '.(sizeof($classes) ? 'class="'.implode(' ', $classes).'" ' : '').'value="1" '.($row[$field] ? 'checked="checked" ' : '').'/>';
+                                    $output .= '<input type="hidden" name="'.$el_attr.'" value="'.($row[$field] ? '1' : '0').'" />';
                                 } elseif (@$col['dropdown']) {
                                     $classes = isset($col['input_classes']) ? $col['input_classes'] : array();
                                     $output .= '<select '.$disabled.'id="'.$el_attr.'" name="'.$el_attr.'"'.(sizeof($classes) ? ' class="'.implode(' ', $classes).'"' : '').'>';
@@ -643,5 +644,4 @@ class dbEdit {
 }
 
 // <<<< TODO
-// allow_edit (per col) to be checked for 'p' and 'e'
 // serialisable closures for php and php_after ?
