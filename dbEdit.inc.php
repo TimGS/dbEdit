@@ -123,7 +123,7 @@ class dbEdit {
                     $no_esc = true;
                 } elseif (@$col['dropdown']) {
                     $flip = array_flip($col['dropdown']);
-                    $output1 = $flip[$row[$return_field]];
+                    $output1 = @$flip[$row[$return_field]];
                 } else {
                     $output1 = $row[$return_field];
                 }
@@ -143,7 +143,7 @@ class dbEdit {
                 $output = nl2br($output);
             }
         }
-        return '<td'.($is_date ? ' data-order="'.$this->html($row[$return_field.'_unixtime'.$temp_field_suffix], $charset).'"' : '').'>'.($col['bold'] ? '<strong>'.$output.'</strong>' : $output).'</td>';
+        return '<td'.($is_date ? ' data-order="'.$this->html($row[$return_field.'_unixtime'.$temp_field_suffix], $charset).'"' : '').'>'.(@$col['bold'] ? '<strong>'.$output.'</strong>' : $output).'</td>';
     }
     
     /**
