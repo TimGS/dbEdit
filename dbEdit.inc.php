@@ -345,13 +345,26 @@ class dbEdit {
         $output = '';
         
         switch ($a) {
+
             case 'p':
             case 'post':
+
+                $allow_edit_fields = '';
+                foreach($this->cols as $field => $col) {
+                    if (isset($col['allow_edit'])) {
+                        $allow_edit_fields .= ", ({$col['allow_edit']}) AS allow_edit_of_{$field}";
+                    }
+                }
+                if ($allow_edit_fields && !($row_allow_edit = $this->db_fetch($this->db_query('SELECT '.substr($allow_edit_fields, 2)." FROM {$this->table} WHERE {$this->primary} = {$id}".$this->sql_condition($this->allow_edit_sql_condition))))) {
+                    header('Location: '.$this->dbEdit_url(array('updated'=>'0'), false));
+                    exit();
+                }
+
                 $fields = array();
                 foreach($_POST as $name => $value) {
                     if (substr($name, 0, strlen($attr_prefix)) == $attr_prefix) {
                         $post_field = substr($name, strlen($attr_prefix));
-                        if (isset($this->cols[$post_field])) {
+                        if (isset($this->cols[$post_field]) && (!isset($this->cols[$post_field]['allow_edit']) || $row_allow_edit['allow_edit_of_'.$post_field])) {
                             if (@$this->cols[$post_field]['type'] == 'checkbox') {
                                 $fields[] = $post_field.'=1';
                             } elseif(isset($this->cols[$post_field]['input_date'])) {
@@ -364,7 +377,7 @@ class dbEdit {
                 }
                 
                 foreach($this->cols as $field => $col) {
-                    if (@$col['type'] == 'checkbox' && !isset($_POST[$attr_prefix.$field])) {
+                    if (@$col['type'] == 'checkbox' && !isset($_POST[$attr_prefix.$field]) && (!isset($col['allow_edit']) || $row_allow_edit['allow_edit_of_'.$field])) {
                         $fields[] = $field.'=0';
                     }
                 }
@@ -661,5 +674,4 @@ class dbEdit {
 }
 
 // <<<< TODO
-// allow_edit (per col) to be checked for 'p' and 'e'
 // serialisable closures for php and php_after ?
