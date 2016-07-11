@@ -675,3 +675,4 @@ class dbEdit {
 
 // <<<< TODO
 // serialisable closures for php and php_after ?
+// maxlength (automatic for char/varchar ???)
