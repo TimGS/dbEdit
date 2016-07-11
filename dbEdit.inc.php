@@ -437,7 +437,7 @@ class dbEdit {
                 $join_tables = array();
                 $join_conditions = array();
                 foreach($this->cols as $field => $col) {
-                    if (!isset($col['constraint'])) {
+                    if (!isset($col['constraint']) && (!isset($col['in_view']) || $col['in_view'])) {
                         $output .= '<th>'.($col['name'] ? $col['name'] : $field).'</th>';
                     }
                     if (isset($col['tables'])) {
@@ -482,7 +482,9 @@ class dbEdit {
                         $output .= '<tr id="'.$attr_prefix.'row-'.$row['dbEdit_primary_key'].'" class="'.$attr_prefix.'noteditable">';
                     }
                     foreach($this->cols as $field => $col) {
-                        $output .= $this->output($row, $temp_field_suffix, $field, $col, $charset);
+                        if (!isset($col['in_view']) || $col['in_view']) {
+                            $output .= $this->output($row, $temp_field_suffix, $field, $col, $charset);
+                        }
                     }
                     if ($this->allow_del) {
                         if (!$this->allow_del_sql_condition || $row['dbEdit_allow_del']) {
