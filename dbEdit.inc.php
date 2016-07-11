@@ -564,7 +564,7 @@ class dbEdit {
                                     if (@$col['type'] == 'date' || @$col['type'] == 'time' || @$col['type'] == 'datetime') {
                                         $classes[] = $col['type'];
                                     }
-                                    $output .= '<input '.$disabled.'type="'.(@$col['type'] ? $col['type'] : 'text').'" id="'.$el_attr.'" name="'.$el_attr.'" '.(sizeof($classes) ? 'class="'.implode(' ', $classes).'" ' : '').'value="'.$this->html($row[$field], $charset).'" />';
+                                    $output .= '<input '.$disabled.'type="'.(@$col['type'] ? $col['type'] : 'text').'" id="'.$el_attr.'" name="'.$el_attr.'" '.(sizeof($classes) ? 'class="'.implode(' ', $classes).'" ' : '').'value="'.$this->html($row[$field], $charset).'" '.(@$col['type'] == 'number' && @$col['step'] ? 'step="'.$this->html($col['step'], $charset).'" ' : '').'/>';
                                 }
                                 $output .= '</div>';
                             }
@@ -609,7 +609,7 @@ class dbEdit {
                             if (@$col['type'] == 'date' || @$col['type'] == 'time' || @$col['type'] == 'datetime') {
                                 $classes[] = $col['type'];
                             }
-                            $output .= '<input type="'.(@$col['type'] ? $col['type'] : 'text').'" id="'.$el_attr.'" name="'.$el_attr.'" '.(sizeof($classes) ? 'class="'.implode(' ', $classes).'" ' : '').'value="'.$this->html(@$col['default'], $charset).'" />';
+                            $output .= '<input type="'.(@$col['type'] ? $col['type'] : 'text').'" id="'.$el_attr.'" name="'.$el_attr.'" '.(sizeof($classes) ? 'class="'.implode(' ', $classes).'" ' : '').'value="'.$this->html(@$col['default'], $charset).'" '.(@$col['type'] == 'number' && @$col['step'] ? 'step="'.$this->html($col['step'], $charset).'" ' : '').'/>';
                         }
                         $output .= '</div>';
                     }
