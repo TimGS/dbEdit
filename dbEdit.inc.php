@@ -92,6 +92,19 @@ class dbEdit {
     private function sql_condition($sql_condition) {
         return $sql_condition ? " AND ({$sql_condition})" : '';
     }
+    
+    /**
+     * Parse an input date and return a string in suitable format for MySQL
+     * 
+     * @param string $value
+     * @param string $format
+     * @param bool $include_time
+     * @return string
+     */
+    private function parse_input_date($value, $format, $include_time = false) {
+        $arr = date_parse_from_format($format, $value);
+        return $arr['year'].'-'.$arr['month'].'-'.$arr['day'].($include_time ? ' '.$arr['hour'].':'.$arr['minute'].':'.$arr['second'] : '');
+    }
 
     private function html($val, $charset, $no_esc = false) {
         return $no_esc ? $val : htmlentities($val, ENT_QUOTES, $charset);
@@ -341,6 +354,8 @@ class dbEdit {
                         if (isset($this->cols[$post_field])) {
                             if (@$this->cols[$post_field]['type'] == 'checkbox') {
                                 $fields[] = $post_field.'='.($value ? '1' : '0'); // Allows hidden input in lieu of disabled checkbox
+                            } elseif(isset($this->cols[$post_field]['input_date'])) {
+                                $fields[] = $post_field.'="'.$this->parse_input_date($value, $this->cols[$post_field]['input_date'], (@$col['type'] == 'datetime')).'"';
                             } else {
                                 $fields[] = $post_field.'="'.$this->db_escape($value).'"';
                             }
@@ -372,6 +387,9 @@ class dbEdit {
                             if (@$this->cols[$post_field]['type'] == 'checkbox') {
                                 $fields[] = $post_field;
                                 $values[] = '1';
+                            } elseif(isset($this->cols[$post_field]['input_date'])) {
+                                $fields[] = $post_field;
+                                $values[] = '"'.$this->parse_input_date($value, $this->cols[$post_field]['input_date'], (@$col['type'] == 'datetime')).'"';
                             } else {
                                 $fields[] = $post_field;
                                 $values[] = '"'.$this->db_escape($value).'"';
