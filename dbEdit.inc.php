@@ -25,6 +25,9 @@ class dbEdit {
     public  $delete_header_html = 'Delete'; // For view list <th>
     public  $delete_html        = 'Delete'; // For view list <td>
 
+    public  $debug = false;
+    private $sql_log = array();
+
     function __construct($dbapi, $conn, $table, $primary, $cols, $where = null) {
         if ($dbapi != 'mysqli') {
             exit('This version of the dbEdit class only supports mysqli.');
@@ -39,7 +42,14 @@ class dbEdit {
         $this->atime = time();
     }
     
+    function __destruct() {
+        if ($this->debug) {
+            echo "<div style='text-transform: none'>\n\n".implode("\n\n", $this->sql_log)."\n\n</div>";
+        }
+    }
+    
     private function db_query($sql) {
+        $this->sql_log[] = $sql;
         $rs = mysqli_query($this->conn, $sql);
         if ($rs) {
             return $rs;
