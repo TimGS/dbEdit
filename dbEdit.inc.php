@@ -74,6 +74,9 @@ class dbEdit {
         return (@$col['type'] == 'date' || @$col['type'] == 'datetime');
     }
 
+    /**
+     * Generates SQL used for displaying rows (i.e. any view, including such as delete-confirm)
+     */
     private function sql_fields($temp_field_suffix, $include_joins) {
         $sql_fields = '';
         foreach($this->cols as $field => $col) {
@@ -98,7 +101,10 @@ class dbEdit {
         }
         return $sql_fields;
     }
-    
+
+    /**
+     * Returns SQL for finding if a row can be edited or deleted
+     */
     private function sql_condition($sql_condition) {
         return $sql_condition ? " AND ({$sql_condition})" : '';
     }
@@ -116,10 +122,16 @@ class dbEdit {
         return $arr['year'].'-'.$arr['month'].'-'.$arr['day'].($include_time ? ' '.$arr['hour'].':'.$arr['minute'].':'.$arr['second'] : '');
     }
 
+    /**
+     * HTML output
+     */
     private function html($val, $charset, $no_esc = false) {
         return $no_esc ? $val : htmlentities($val, ENT_QUOTES, $charset);
     }
 
+    /**
+     * Output one cell/value for display
+     */
     private function output($row, $temp_field_suffix, $field, $col, $charset) {
         $output = '';
         $is_date = false;
@@ -134,35 +146,46 @@ class dbEdit {
             $no_esc = @$col['no_esc'];
 
             if (@$col['php']) {
+                // Config-supplied function to generate output
                 $output1 = call_user_func($col['php'], $row['dbEdit_primary_key'], $row, $temp_field_suffix, $field, $col, $charset);
             } elseif (@$col['sql']) {
+                // Config has custom SQL to generate output
                 $output1 = $row[$return_field.'_sql'.$temp_field_suffix];
             } elseif ($this->can_be_timestamp($col) && isset($col['date'])) {
+                // Convert MySQL-generated timestamp to date using PHP's timezone
+                // Either the MySQL field is a timestamp, or MySQL should be using the same timezone as PHP
                 $output1 = date($col['date'], $row[$return_field.'_unixtime'.$temp_field_suffix]);
                 $is_date = true;
             } else {
                 if (@$col['type'] == 'checkbox') {
+                    // Checkbox; display values should be in the config
                     $output1 = $col['checkbox_value_html'][$row[$return_field]];
                     $no_esc = true;
                 } elseif (@$col['dropdown']) {
+                    // Select dropdown; display values should be in the config
                     $flip = array_flip($col['dropdown']);
                     $output1 = @$flip[$row[$return_field]];
                 } else {
+                    // Anything else; the field value is the output
                     $output1 = $row[$return_field];
                 }
             }
             
             if (@$col['php_after']) {
+                // Config-supplied function to alter the output
                 $output1 = call_user_func($col['php_after'], $output1, $row['dbEdit_primary_key'], $row, $temp_field_suffix, $field, $col, $charset);
             }
             
+            // Convert to HTML for output
             $output = $this->html($output1, $charset, $no_esc);
 
             if (@$col['trim']) {
+                // Trim
                 $output = trim($output);
             }
 
             if (@$col['nl2br']) {
+                // Convert newlines to HTML line breaks
                 $output = nl2br($output);
             }
         }
