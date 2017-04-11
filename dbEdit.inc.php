@@ -69,7 +69,10 @@ class dbEdit {
     private function db_escape($str) {
         return mysqli_real_escape_string($this->conn, $str);
     }
-    
+
+    /**
+     * Can the field's value be returned as a timestamp by MySQL?
+     */
     private function can_be_timestamp($col) {
         return (@$col['type'] == 'date' || @$col['type'] == 'datetime');
     }
@@ -93,6 +96,17 @@ class dbEdit {
                 if (isset($col['sql'])) {
                     $sql_fields .= ", ({$col['sql']}) AS {$return_field}_sql{$temp_field_suffix}";
                 } elseif ($this->can_be_timestamp($col) && isset($col['date'])) {
+                    // If $col['date'] is set, ask MySQL for a timestamp so we can then use PHP's date function
+                    // for output. $col['date'] will be used as the format string for date().
+                    // Either 
+                    //      - the MySQL field is a timestamp, or 
+                    //      - MySQL should be using the same timezone as PHP and the column in MySQL should be a date or datetime.
+                    //
+                    // NOTE (1): It is not obligatory to use $col['date'] just because $col['type'] is set to "date" or "datetime". It is 
+                    //           purely output formatting functionality.
+                    //
+                    // NOTE (2): If the column in MySQL is a date or datetime, and it is not known that MySQL is using the same timezone as
+                    //           PHP, this functionality should not be used. Instead use $col['sql'] and use MySQL's DATE_FORMAT() function.
                     $sql_fields .= ", UNIX_TIMESTAMP({$origin_field}) AS {$return_field}_unixtime{$temp_field_suffix}";
                 } else {
                     $sql_fields .= ", {$origin_field} AS {$return_field}";
@@ -152,8 +166,17 @@ class dbEdit {
                 // Config has custom SQL to generate output
                 $output1 = $row[$return_field.'_sql'.$temp_field_suffix];
             } elseif ($this->can_be_timestamp($col) && isset($col['date'])) {
-                // Convert MySQL-generated timestamp to date using PHP's timezone
-                // Either the MySQL field is a timestamp, or MySQL should be using the same timezone as PHP
+                // If $col['date'] is set, then convert a MySQL-generated timestamp to an output date
+                // using PHP's timezone. $col['date'] will be used as the format string for date().
+                // Either 
+                //      - the MySQL field is a timestamp, or 
+                //      - MySQL should be using the same timezone as PHP and the column in MySQL should be a date or datetime.
+                //
+                // NOTE (1): It is not obligatory to use $col['date'] just because $col['type'] is set to "date" or "datetime". It is 
+                //           purely output formatting functionality.
+                //
+                // NOTE (2): If the column in MySQL is a date or datetime, and it is not known that MySQL is using the same timezone as
+                //           PHP, this functionality should not be used. Instead use $col['sql'] and use MySQL's DATE_FORMAT() function.
                 $output1 = date($col['date'], $row[$return_field.'_unixtime'.$temp_field_suffix]);
                 $is_date = true;
             } else {
