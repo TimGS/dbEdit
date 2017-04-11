@@ -2,7 +2,7 @@
 class dbEdit {
 
     // Set in constructor
-    private $dbapi;   // DB API. Only mysqli supported at the moment.
+    private $dbapi;   // DB API. Only mysqli supported at the moment. Child classes could extend this.
     private $conn;    // existing mysqli connection
     private $table;   // db table
     private $primary; // primary key
@@ -28,9 +28,16 @@ class dbEdit {
     public  $debug = false;
     private $sql_log = array();
 
+    /**
+     * Make a brand new instance. dbEdit::init() should normally be used instead.
+     */
     function __construct($dbapi, $conn, $table, $primary, $cols, $where = null) {
         if ($dbapi != 'mysqli') {
-            exit('This version of the dbEdit class only supports mysqli.');
+            exit('This version of the dbEdit class only supports mysqli.'); // For other DB APIs, child classes could override:
+                                                                            //      dbEdit::__construct()
+                                                                            //      dbEdit::db_query()
+                                                                            //      dbEdit::db_fetch()
+                                                                            //      dbEdit::escape()
         }
         $this->dbapi = $dbapi;
         $this->conn = $conn;
