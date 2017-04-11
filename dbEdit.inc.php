@@ -380,7 +380,7 @@ class dbEdit {
         switch ($a) {
 
             case 'p':
-            case 'post':
+            case 'post':    // This is the POST that updates/edits an existing row
 
                 $allow_edit_fields = '';
                 foreach($this->cols as $field => $col) {
@@ -397,12 +397,16 @@ class dbEdit {
                 foreach($_POST as $name => $value) {
                     if (substr($name, 0, strlen($attr_prefix)) == $attr_prefix) {
                         $post_field = substr($name, strlen($attr_prefix));
+                        // Check that this POST element is a field in the config, that can be edited.
                         if (isset($this->cols[$post_field]) && (!isset($this->cols[$post_field]['allow_edit']) || $row_allow_edit['allow_edit_of_'.$post_field])) {
                             if (@$this->cols[$post_field]['type'] == 'checkbox') {
+                                // Checkbox input are 0 or 1
                                 $fields[] = $post_field.'=1';
                             } elseif(isset($this->cols[$post_field]['input_date'])) {
+                                // Convert date input format to MySQL format
                                 $fields[] = $post_field.'="'.$this->parse_input_date($value, $this->cols[$post_field]['input_date'], (@$col['type'] == 'datetime')).'"';
                             } else {
+                                // Anything else; use the POST element's escaped value
                                 $fields[] = $post_field.'="'.$this->db_escape($value).'"';
                             }
                         }
@@ -410,6 +414,7 @@ class dbEdit {
                 }
                 
                 foreach($this->cols as $field => $col) {
+                    // Reset any unchecked checkbox inputs - we need to check for their absence in the POST
                     if (@$col['type'] == 'checkbox' && !isset($_POST[$attr_prefix.$field]) && (!isset($col['allow_edit']) || $row_allow_edit['allow_edit_of_'.$field])) {
                         $fields[] = $field.'=0';
                     }
@@ -423,20 +428,24 @@ class dbEdit {
                 exit();
                 
             case 'i':
-            case 'insert':
+            case 'insert':  // This is the POST that creates/adds a new row
                 $fields = array();
                 $values = array();
                 foreach($_POST as $name => $value) {
                     if (substr($name, 0, strlen($attr_prefix)) == $attr_prefix) {
                         $post_field = substr($name, strlen($attr_prefix));
+                        // Check that this POST element is a field in the config.
                         if (isset($this->cols[$post_field])) {
                             if (@$this->cols[$post_field]['type'] == 'checkbox') {
+                                // Checkbox input are 0 or 1
                                 $fields[] = $post_field;
                                 $values[] = '1';
                             } elseif(isset($this->cols[$post_field]['input_date'])) {
+                                // Convert date input format to MySQL format
                                 $fields[] = $post_field;
                                 $values[] = '"'.$this->parse_input_date($value, $this->cols[$post_field]['input_date'], (@$col['type'] == 'datetime')).'"';
                             } else {
+                                // Anything else; use the POST element's escaped value
                                 $fields[] = $post_field;
                                 $values[] = '"'.$this->db_escape($value).'"';
                             }
@@ -445,10 +454,13 @@ class dbEdit {
                 }
                 
                 foreach($this->cols as $field => $col) {
+                    
                     if (@$col['type'] == 'checkbox' && !isset($_POST[$attr_prefix.$field])) {
+                        // Set any unchecked checkbox inputs - we need to check for their absence in the POST
                         $fields[] = $field;
                         $values[] = '0';
                     } elseif (@$col['constraint']) {
+                        // If a column is set to be a constraint, any added rows must use this value.
                         $fields[] = $field;
                         $values[] = $col['constraint'];
                     }
