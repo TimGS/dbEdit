@@ -1,4 +1,43 @@
 <?php
+/** 
+ * dbEdit database table editor
+ * 
+ * Config options:
+ * 
+ * General:
+ *      'name'          Column heading and input label
+ *      'in_view'       If true (the default) then the column is displayed in the general table view
+ *      'type'          Input type: text (default), number, checkbox, date, datetime, time.
+ *                          - Other HTML5 'text-like' input types can be used for the purposes of client side form validation, but dbEdit's handling of them is as per 'text'.
+ *                          - For <select>s set 'dropdown' (below)
+ *                          - For <textarea>s set 'textarea' (below)
+ *      'dropdown'      Array of text => value pairs for <select>s. Affects both output and forms. Do not set 'type'; a <select> is inferred.
+ *      'textarea'      Array with keys 'rows' and 'cols'. Do not set 'type'; a <textarea> is inferred.
+ *      'constraint'    Only rows having this column's field set to this value will be used by dbEdit.
+ *                          - This field is not available for editing.
+ *                          - New rows will take the constraint value.
+ *      'extra'         If set to true, this field will not be displayed in either add or edit forms. Defaults can be set in the database.
+ * Output:
+ *      'sql'           SQL expression giving alternative value for display purposes only (view and delete-confirm)
+ *      'date'          Date format string for PHP's date.
+ *                          - Not obligatory for dates or datetimes, but if used the field must be a MySQL timestamp or PHP and MySQL must be using identical timezones.
+ *      'checkbox_value_html' Array of two values, with keys 0 and 1, for displaying the setting of checkbox/boolean fields.
+ *      'php'           PHP callback to process a field value for display. Replace dbEdit's processing.
+ *                          - Callback must take ($primary_key_value, $row_array, $temp_field_suffix, $column_name, $column_config, $charset)
+ *                          - Field value is normally $row_array[$column_name] unless 'sql' or 'date' is used.
+ *      'php_after'     PHP callback to process a field value after dbEdit has done so, but before HTML escaping (see 'no_esc'), trimming (see 'trim') and converting newlines (see 'nl2br')
+ *                          - Callback must take ($db_edits_output, $primary_key_value, $row_array, $temp_field_suffix, $column_name, $column_config, $charset)
+ *      'no_esc'        Default to false. If true, this field's contents will not be escaped for HTML display. Intended for HTML richtext fields.
+ *      'trim'          If true, trims the output of whitespace.
+ *      'nl2br'         If true, converts newlines to HTML line breaks.
+ * Adding/editing rows:
+ *      'allow_edit'    SQL that determines if this column can be edited. As this is an SQL expression, the result can be different on different rows.
+ *      'input_classes' Input element classes. Used for <input> and <select>
+ *      'input_date'    Format string for the input values of date and datetime fields. Not obligatory - if not used such field's inputs must 
+ *                      produce a date string in the usual MySQL format of YYYY-MM-DD
+ *      'step'          Used for 'type'="number"
+ *      
+ */
 class dbEdit {
 
     // Set in constructor
