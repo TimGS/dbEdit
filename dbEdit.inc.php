@@ -188,14 +188,24 @@ class dbEdit {
     private function html($val, $charset, $no_esc = false) {
         return $no_esc ? $val : htmlentities($val, ENT_QUOTES, $charset);
     }
+    
+    /**
+     * Should a column be displayed?
+     */
+    private function displayable($col) {
+        return !isset($col['constraint']) && (!isset($col['in_view']) || $col['in_view']);
+    }
 
     /**
-     * Output one cell/value for display
+     * Output one cell/value for display.
+     * 
+     * Returns an empty string for non-displayable columns.
      */
     private function output($row, $temp_field_suffix, $field, $col, $charset) {
         $output = '';
-        $is_date = false;
-        if (!isset($col['constraint'])) {
+        if ($this->displayable($col)) {
+
+            $is_date = false;
 
             if (strpos($field, '.') === false) {
                 $return_field = $field;
@@ -257,8 +267,11 @@ class dbEdit {
                 // Convert newlines to HTML line breaks
                 $output = nl2br($output);
             }
+            
+            $output = '<td'.($is_date ? ' data-order="'.$this->html($row[$return_field.'_unixtime'.$temp_field_suffix], $charset).'"' : '').'>'.(@$col['bold'] ? '<strong>'.$output.'</strong>' : $output).'</td>';
         }
-        return '<td'.($is_date ? ' data-order="'.$this->html($row[$return_field.'_unixtime'.$temp_field_suffix], $charset).'"' : '').'>'.(@$col['bold'] ? '<strong>'.$output.'</strong>' : $output).'</td>';
+        
+        return $output;
     }
     
     /**
@@ -551,7 +564,7 @@ class dbEdit {
                 $join_tables = array();
                 $join_conditions = array();
                 foreach($this->cols as $field => $col) {
-                    if (!isset($col['constraint']) && (!isset($col['in_view']) || $col['in_view'])) {
+                    if ($this->displayable($col)) {
                         $output .= '<th>'.($col['name'] ? $col['name'] : $field).'</th>';
                     }
                     if (isset($col['tables'])) {
@@ -596,9 +609,7 @@ class dbEdit {
                         $output .= '<tr id="'.$attr_prefix.'row-'.$row['dbEdit_primary_key'].'" class="'.$attr_prefix.'noteditable">';
                     }
                     foreach($this->cols as $field => $col) {
-                        if (!isset($col['in_view']) || $col['in_view']) {
-                            $output .= $this->output($row, $temp_field_suffix, $field, $col, $charset);
-                        }
+                        $output .= $this->output($row, $temp_field_suffix, $field, $col, $charset);
                     }
                     if ($this->allow_del) {
                         if (!$this->allow_del_sql_condition || $row['dbEdit_allow_del']) {
