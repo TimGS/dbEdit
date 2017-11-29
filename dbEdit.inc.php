@@ -61,8 +61,13 @@ class dbEdit {
     private $allow_del_sql_condition; // If not null, a row must satisfy this condition to be able to be deleted.
     private $allow_edit_sql_condition; // If not null, a row must satisfy this condition to be able to be edited.
     
+    public  $outer_classes      = array('v'=>null, 'a'=>null, 'dc'=>null, 'e'=>null);
+    
     public  $delete_header_html = 'Delete'; // For view list <th>
     public  $delete_html        = 'Delete'; // For view list <td>
+    public  $add_html           = '<a href="[+add_url+]">Add</a>'; // After view 
+    
+    public  $cancel_html        = '<button type="submit" name="[+name+]" value="v" onclick="this.type=\'button\'; window.location.href=\'[+url+]\';">Cancel</button>'; // For all cancel buttons/links
 
     public  $debug = false;
     private $sql_log = array();
@@ -560,7 +565,7 @@ class dbEdit {
                 if (@$_GET['updated']) {
                     $output .= '<p class="'.$attr_prefix.'msg">Row updated</p>';
                 }
-                $output .= '<table id="'.$attr_prefix.'table"><thead><tr>';
+                $output .= '<table id="'.$attr_prefix.'table"'.($this->outer_classes['v'] ? ' class="'.$this->html($this->outer_classes['v'], $charset).'"' : '').'><thead><tr>';
                 $join_tables = array();
                 $join_conditions = array();
                 foreach($this->cols as $field => $col) {
@@ -623,7 +628,7 @@ class dbEdit {
                 $output .= '</tbody></table>';
                 
                 if ($this->allow_add) {
-                    $output .= '<div class="'.$attr_prefix.'add"><a href="'.$this->dbEdit_url(array($this->action_param=>'a'), true).'">Add</a></div>';
+                    $output .= '<div class="'.$attr_prefix.'add'.($this->outer_classes['v'] ? ' '.$this->html($this->outer_classes['v'], $charset) : '').'">'.str_replace('[+add_url+]', $this->dbEdit_url(array($this->action_param=>'a'), true), $this->add_html).'</div>';
                 }
 
                 break;
@@ -632,18 +637,18 @@ class dbEdit {
             case 'deleteconfirm':
                     $sql_fields = $this->sql_fields($temp_field_suffix, false);
                     $row = $this->db_fetch($this->db_query("SELECT *{$sql_fields} FROM {$this->table} WHERE {$this->primary} = {$id}".$this->sql_condition($this->allow_del_sql_condition)));
-                    $output .= '<table id="'.$attr_prefix.'table"><tbody>';
+                    $output .= '<table id="'.$attr_prefix.'table"'.($this->outer_classes['dc'] ? ' class="'.$this->html($this->outer_classes['dc'], $charset).'"' : '').'><tbody>';
                     foreach($this->cols as $field => $col) {
                         if (!isset($col['constraint']) && (!isset($col['tables']) || $include_joins)) {
                             $output .= "<tr><td>{$col['name']}</td><td>{$this->output($row, $temp_field_suffix, $field, $col, $charset)}</td></tr>";
                         }
                     }
                     $output .= '</tbody></table>
-                    <form action="'.$this->dbEdit_url(null, true, false).'" method="post">
+                    <form action="'.$this->dbEdit_url(null, true, false).'" method="post"'.($this->outer_classes['dc'] ? ' class="'.$this->html($this->outer_classes['dc'], $charset).'"' : '').'>
                         <input type="hidden" name="dbedit" value="'.$this->uniqid.'" />
                         <input type="hidden" name="'.$this->id_param.'" value="'.$id.'" />
                         <button type="submit" name="'.$this->action_param.'" value="d">Delete</button>
-                        <button type="submit" name="'.$this->action_param.'" value="v" onclick="this.type=\'button\'; window.location.href=\''.$this->dbEdit_url(null, true).'\';">Cancel</button>
+                        '.str_replace('[+name+]', $this->action_param, str_replace('[+url+]', $this->dbEdit_url(null, true), $this->cancel_html)).'
                     </form>';
                 break;
             
@@ -666,7 +671,7 @@ class dbEdit {
                     }
                     $row = $this->db_fetch($this->db_query("SELECT *{$allow_edit_fields} FROM {$this->table} WHERE {$this->primary} = {$id}".$this->sql_condition($this->allow_edit_sql_condition)));
                     if ($row) {
-                        $output .= '<form id="'.$attr_prefix.'form" method="post" action="'.$this->dbEdit_url(null, true, false).'"><fieldset>';
+                        $output .= '<form id="'.$attr_prefix.'form" method="post" action="'.$this->dbEdit_url(null, true, false).'"'.($this->outer_classes['e'] ? ' class="'.$this->html($this->outer_classes['e'], $charset).'"' : '').'><fieldset>';
                         foreach($this->cols as $field => $col) {
                             if (!isset($col['constraint']) && !@$col['extra']) {
                                 $el_attr = $attr_prefix.$field;
@@ -701,7 +706,7 @@ class dbEdit {
                         <fieldset class="submit">
                             <button type="submit" id="'.$attr_prefix.'submit" name="'.$this->action_param.'" value="p">Edit</button>
                             <button type="reset">Reset</button>
-                            <button type="submit" name="'.$this->action_param.'" value="v" onclick="this.type=\'button\'; window.location.href=\''.$this->dbEdit_url(null, true).'\';">Cancel</button>
+                            '.str_replace('[+name+]', $this->action_param, str_replace('[+url+]', $this->dbEdit_url(null, true), $this->cancel_html)).'
                             <input type="hidden" name="dbedit" value="'.$this->uniqid.'" />
                             <input type="hidden" name="'.$this->id_param.'" value="'.$id.'" />
                         </fieldset>
@@ -712,7 +717,7 @@ class dbEdit {
 
             case 'a':
             case 'add':
-                $output .= '<form id="'.$attr_prefix.'form" method="post" action="'.$this->dbEdit_url(null, true, false).'"><fieldset>';
+                $output .= '<form id="'.$attr_prefix.'form" method="post" action="'.$this->dbEdit_url(null, true, false).'"'.($this->outer_classes['a'] ? ' class="'.$this->html($this->outer_classes['a'], $charset).'"' : '').'><fieldset>';
                 foreach($this->cols as $field => $col) {
                     if (!isset($col['constraint']) && !@$col['extra']) {
                         $el_attr = $attr_prefix.$field;
@@ -745,7 +750,7 @@ class dbEdit {
                 '</fieldset>
                 <fieldset class="submit">
                     <button type="submit" name="'.$this->action_param.'" value="i">Add</button>
-                    <button type="submit" name="'.$this->action_param.'" value="v" onclick="this.type=\'button\'; window.location.href=\''.$this->dbEdit_url(null, true).'\';">Cancel</button>
+                    '.str_replace('[+name+]', $this->action_param, str_replace('[+url+]', $this->dbEdit_url(null, true), $this->cancel_html)).'
                     <input type="hidden" name="dbedit" value="'.$this->uniqid.'" />
                 </fieldset>
                 </form>';
