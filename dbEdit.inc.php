@@ -36,7 +36,7 @@
  *      'input_date'    Format string for the input values of date and datetime fields. Not obligatory - if not used such field's inputs must 
  *                      produce a date string in the usual MySQL format of YYYY-MM-DD
  *      'step'          Used for 'type'="number"
- *      
+ * 
  */
 class dbEdit {
 
@@ -46,6 +46,7 @@ class dbEdit {
     private $table;   // db table
     private $primary; // primary key
     private $cols;    // column details
+    private $other_cols = []; // Columns that are set external to the editor. Array of arrays with keys 'type' (as per config plus 'timestamp') and 'val' (string, number or special case 'NOW()')
     private $where;   // where clause (optional)
     private $uniqid;  // identifier of this editor; used to preserve the editor over successive requests made by the editor itself.
     private $atime;   // When the editor was last used
@@ -421,6 +422,15 @@ class dbEdit {
             $this->update_session();
         }
     }
+    
+    /**
+     * Pass values that should be set by calling code, but are not included or set by the editor.
+     * 
+     * Currently only used for row updates
+     */
+    function set_other_cols(Array $other_cols) {
+        $this->other_cols = $other_cols;
+    }
 
     /**
      * Set order column(s)
@@ -504,6 +514,32 @@ class dbEdit {
                     // Reset any unchecked checkbox inputs - we need to check for their absence in the POST
                     if (@$col['type'] == 'checkbox' && !isset($_POST[$attr_prefix.$field]) && (!isset($col['allow_edit']) || $row_allow_edit['allow_edit_of_'.$field])) {
                         $fields[] = $field.'=0';
+                    }
+                }
+                
+                foreach($this->other_cols as $field => $col) {
+                    // Column values set by external calling code, not the editor
+                    if ($col['val'] == 'NOW()') {
+                        // Special case NOW()
+                        switch ($col['type']) {
+                            case 'date':
+                                $fields[] = $field.'=DATE(NOW())';
+                                break;
+                            case 'timestamp':
+                            case 'datetime':
+                                $fields[] = $field.'=NOW()';
+                                break;
+                        }
+                    } else {
+                        if ($col['type'] == 'number') {
+                            if (is_numeric($col['val'])) {
+                                $fields[] = $field.'='.$col['val'];
+                            } else {
+                                $fields[] = $field.'='.$this->db_escape($col['val']);
+                            }
+                        } else {
+                            $fields[] = $field.'='.$this->db_escape($col['val']);
+                        }
                     }
                 }
                 
