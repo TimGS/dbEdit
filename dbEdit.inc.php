@@ -69,6 +69,7 @@ class dbEdit {
     public  $add_html           = '<a href="[+add_url+]">Add</a>'; // After view 
     
     public  $cancel_html        = '<button type="submit" name="[+name+]" value="v" onclick="this.type=\'button\'; window.location.href=\'[+url+]\';">Cancel</button>'; // For all cancel buttons/links
+    public  $reset_html         = '<button type="reset">Reset</button>';
 
     public  $debug = false;
     private $sql_log = array();
@@ -741,7 +742,7 @@ class dbEdit {
                         '</fieldset>
                         <fieldset class="submit">
                             <button type="submit" id="'.$attr_prefix.'submit" name="'.$this->action_param.'" value="p">Edit</button>
-                            <button type="reset">Reset</button>
+                            '.$this->reset_html.'
                             '.str_replace('[+name+]', $this->action_param, str_replace('[+url+]', $this->dbEdit_url(null, true), $this->cancel_html)).'
                             <input type="hidden" name="dbedit" value="'.$this->uniqid.'" />
                             <input type="hidden" name="'.$this->id_param.'" value="'.$id.'" />
