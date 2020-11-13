@@ -471,6 +471,10 @@ class dbEdit {
             $a = 'v';
         }
         
+        if (array_key_exists($a, $this->outer_classes)) {
+            $this->outer_classes[$a] .= ($this->outer_classes[$a] ? ' ' : '').$attr_prefix.'action_'.$a;
+        }
+        
         $temp_field_suffix = uniqid();
         
         $output = '';
