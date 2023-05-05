@@ -127,7 +127,7 @@ class dbEdit {
      * Can the field's value be returned as a timestamp by MySQL?
      */
     private function can_be_timestamp($col) {
-        return (@$col['type'] == 'date' || @$col['type'] == 'datetime');
+        return isset($col['type']) && ($col['type'] == 'date' || $col['type'] == 'datetime');
     }
 
     /**
@@ -220,12 +220,12 @@ class dbEdit {
                 $return_field = substr(strrchr($field, '.'), 1);
             }
 
-            $no_esc = @$col['no_esc'];
+            $no_esc = !empty($col['no_esc']);
 
-            if (@$col['php']) {
+            if (!empty($col['php'])) {
                 // Config-supplied function to generate output
                 $output1 = call_user_func($col['php'], $row['dbEdit_primary_key'], $row, $temp_field_suffix, $field, $col, $charset);
-            } elseif (@$col['sql']) {
+            } elseif (!empty($col['sql'])) {
                 // Config has custom SQL to generate output
                 $output1 = $row[$return_field.'_sql'.$temp_field_suffix];
             } elseif ($this->can_be_timestamp($col) && isset($col['date'])) {
@@ -243,11 +243,11 @@ class dbEdit {
                 $output1 = date($col['date'], $row[$return_field.'_unixtime'.$temp_field_suffix]);
                 $is_date = true;
             } else {
-                if (@$col['type'] == 'checkbox') {
+                if (isset($col['type']) && $col['type'] == 'checkbox') {
                     // Checkbox; display values should be in the config
                     $output1 = $col['checkbox_value_html'][$row[$return_field]];
                     $no_esc = true;
-                } elseif (@$col['dropdown']) {
+                } elseif (!empty($col['dropdown'])) {
                     // Select dropdown; display values should be in the config
                     $flip = array_flip($col['dropdown']);
                     $output1 = @$flip[$row[$return_field]];
@@ -257,7 +257,7 @@ class dbEdit {
                 }
             }
             
-            if (@$col['php_after']) {
+            if (!empty($col['php_after'])) {
                 // Config-supplied function to alter the output
                 $output1 = call_user_func($col['php_after'], $output1, $row['dbEdit_primary_key'], $row, $temp_field_suffix, $field, $col, $charset);
             }
@@ -265,17 +265,17 @@ class dbEdit {
             // Convert to HTML for output
             $output = $this->html($output1, $charset, $no_esc);
 
-            if (@$col['trim']) {
+            if (!empty($col['trim'])) {
                 // Trim
                 $output = trim($output);
             }
 
-            if (@$col['nl2br']) {
+            if (!empty($col['nl2br'])) {
                 // Convert newlines to HTML line breaks
                 $output = nl2br($output);
             }
             
-            $output = '<td'.($is_date ? ' data-order="'.$this->html($row[$return_field.'_unixtime'.$temp_field_suffix], $charset).'"' : '').'>'.(@$col['bold'] ? '<strong>'.$output.'</strong>' : $output).'</td>';
+            $output = '<td'.($is_date ? ' data-order="'.$this->html($row[$return_field.'_unixtime'.$temp_field_suffix], $charset).'"' : '').'>'.(!empty($col['bold']) ? '<strong>'.$output.'</strong>' : $output).'</td>';
         }
         
         return $output;
@@ -457,10 +457,10 @@ class dbEdit {
         $this->atime = time();
     
         if (!$a) {
-            $a = @$_REQUEST[$this->action_param] ? $_REQUEST[$this->action_param] : 'v';
+            $a = $_REQUEST[$this->action_param] ?? 'v';
         }
         
-        if (!$id && @$_REQUEST[$this->id_param]) {
+        if (!$id && !empty($_REQUEST[$this->id_param])) {
             $id =  $_REQUEST[$this->id_param];
         }
         if ($id && !ctype_digit($id)) {
@@ -603,7 +603,7 @@ class dbEdit {
                 
             case 'v':
             case 'view':
-                if (@$_GET['updated']) {
+                if (!empty($_GET['updated'])) {
                     $output .= '<p class="'.$attr_prefix.'msg">Row updated</p>';
                 }
                 $output .= '<table id="'.$attr_prefix.'table"'.($this->outer_classes['v'] ? ' class="'.$this->html($this->outer_classes['v'], $charset).'"' : '').'><thead><tr>';
@@ -615,8 +615,9 @@ class dbEdit {
                     }
                     if (isset($col['tables'])) {
                         foreach($col['tables'] as $join_table) { // table, join condition, optional table alias, optional join type (INNER, LEFT, RIGHT - default INNER)
-                            $join = (@$join_table[3] ? $join_table[3] : 'INNER').' JOIN '.$join_table[0].(@$join_table[2] ? ' AS '.$join_table[2] : '');
-                            if ($join_table[3]) {
+                            $join_type_specified = !empty($join_table[3]);
+                            $join = ($join_type_specified ? $join_table[3] : 'INNER').' JOIN '.$join_table[0].(!empty($join_table[2]) ? ' AS '.$join_table[2] : '');
+                            if ($join_type_specified) {
                                 $join_tables[] = $join.' ON '.$join_table[1]; // ON (LEFT/RIGHT JOIN)
                             } else {
                                 $join_tables[] = $join;
