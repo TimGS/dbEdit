@@ -175,7 +175,47 @@ class dbEdit {
     private function sql_condition($sql_condition) {
         return $sql_condition ? " AND ({$sql_condition})" : '';
     }
-    
+
+    /**
+     * Get fields, tables and WHERE for viewing record(s)
+     */
+    private function get_sql_fields_tables_and_where(string $temp_field_suffix): object {
+        $join_tables = array();
+        $join_conditions = array();
+        foreach($this->cols as $field => $col) {
+            if (isset($col['tables'])) {
+                foreach($col['tables'] as $join_table) { // table, join condition, optional table alias, optional join type (INNER, LEFT, RIGHT - default INNER)
+                    $join_type_specified = !empty($join_table[3]);
+                    $join = ($join_type_specified ? $join_table[3] : 'INNER').' JOIN '.$join_table[0].(!empty($join_table[2]) ? ' AS '.$join_table[2] : '');
+                    if ($join_type_specified) {
+                        $join_tables[] = $join.' ON '.$join_table[1]; // ON (LEFT/RIGHT JOIN)
+                    } else {
+                        $join_tables[] = $join;
+                        $join_conditions[] = $join_table[1]; // WHERE/AND (JOIN)
+                    }
+                    // <<<< todo - avoid duplicate joins
+                }
+            }
+        }
+
+        $sql_fields = $this->sql_fields($temp_field_suffix, true);
+
+        // Table joins?
+        if (sizeof($join_tables)) {
+            $tables = $this->table;
+            foreach($join_tables as $join_table) {
+                $tables .= ' '.$join_table;
+            }
+            $where = ($this->where ? $this->where.' AND ' : '').implode(' AND ', $join_conditions);
+        } else {
+            $tables = $this->table;
+            $where = $this->where;
+        }
+
+        return (object)['fields' => $sql_fields, 'tables' => $tables, 'where' => $where];
+    }
+
+
     /**
      * Parse an input date and return a string in suitable format for MySQL
      * 
@@ -607,48 +647,25 @@ class dbEdit {
                     $output .= '<p class="'.$attr_prefix.'msg">Row updated</p>';
                 }
                 $output .= '<table id="'.$attr_prefix.'table"'.($this->outer_classes['v'] ? ' class="'.$this->html($this->outer_classes['v'], $charset).'"' : '').'><thead><tr>';
-                $join_tables = array();
-                $join_conditions = array();
+
                 foreach($this->cols as $field => $col) {
                     if ($this->displayable($col)) {
                         $output .= '<th>'.($col['name'] ? $col['name'] : $field).'</th>';
                     }
-                    if (isset($col['tables'])) {
-                        foreach($col['tables'] as $join_table) { // table, join condition, optional table alias, optional join type (INNER, LEFT, RIGHT - default INNER)
-                            $join_type_specified = !empty($join_table[3]);
-                            $join = ($join_type_specified ? $join_table[3] : 'INNER').' JOIN '.$join_table[0].(!empty($join_table[2]) ? ' AS '.$join_table[2] : '');
-                            if ($join_type_specified) {
-                                $join_tables[] = $join.' ON '.$join_table[1]; // ON (LEFT/RIGHT JOIN)
-                            } else {
-                                $join_tables[] = $join;
-                                $join_conditions[] = $join_table[1]; // WHERE/AND (JOIN)
-                            }
-                            // <<<< todo - avoid duplicate joins
-                        }
-                    }
                 }
-                $sql_fields = $this->sql_fields($temp_field_suffix, true);
-                
-                // Table joins?
-                if (sizeof($join_tables)) {
-                    $tables = $this->table;
-                    foreach($join_tables as $join_table) {
-                        $tables .= ' '.$join_table;
-                    }
-                    $where = ($this->where ? $this->where.' AND ' : '').implode(' AND ', $join_conditions);
-                } else {
-                    $tables = $this->table;
-                    $where = $this->where;
-                }
-                
+
                 if ($this->allow_del) {
                     $output .= '<th class="'.$attr_prefix.'del-col">'.$this->delete_header_html.'</th>';
                 }
+
                 $output .= '</tr></thead><tbody>';
+
+                $wt = $this->get_sql_fields_tables_and_where($temp_field_suffix);
+
                 $rs = $this->db_query('SELECT '.$this->table.'.'.$this->primary.' AS dbEdit_primary_key'.($this->allow_del_sql_condition ? ", IF({$this->allow_del_sql_condition}, 1, 0) AS dbEdit_allow_del" : '')
                                                 .($this->allow_edit_sql_condition ? ", IF({$this->allow_edit_sql_condition}, 1, 0) AS dbEdit_allow_edit" : '')
-                                                .$sql_fields
-                                            ." FROM {$tables}".($where ? ' WHERE '.$where : '').' ORDER BY '.($this->sql_order ? $this->sql_order : $this->table.'.'.$this->primary.' ASC'));
+                                                .$wt->fields
+                                            ." FROM {$wt->tables}".($wt->where ? ' WHERE '.$wt->where : '').' ORDER BY '.($this->sql_order ? $this->sql_order : $this->table.'.'.$this->primary.' ASC'));
                 while($row = $this->db_fetch($rs)) {
                     if ($this->allow_edit && (!$this->allow_edit_sql_condition || $row['dbEdit_allow_edit'])) {
                         $output .= '<tr id="'.$attr_prefix.'row-'.$row['dbEdit_primary_key'].'" class="'.$attr_prefix.'editable" onclick="window.location.href=\''.$this->dbEdit_url(array($this->action_param=>'e', $this->id_param=>$row['dbEdit_primary_key']), true).'\'">';
@@ -677,21 +694,25 @@ class dbEdit {
 
             case 'dc':
             case 'deleteconfirm':
-                    $sql_fields = $this->sql_fields($temp_field_suffix, false);
-                    $row = $this->db_fetch($this->db_query("SELECT *{$sql_fields} FROM {$this->table} WHERE {$this->primary} = {$id}".$this->sql_condition($this->allow_del_sql_condition)));
-                    $output .= '<table id="'.$attr_prefix.'table"'.($this->outer_classes['dc'] ? ' class="'.$this->html($this->outer_classes['dc'], $charset).'"' : '').'><tbody>';
-                    foreach($this->cols as $field => $col) {
-                        if (!isset($col['constraint']) && (!isset($col['tables']) || $include_joins)) {
-                            $output .= "<tr><td>{$col['name']}</td><td>{$this->output($row, $temp_field_suffix, $field, $col, $charset)}</td></tr>";
-                        }
+                $wt = $this->get_sql_fields_tables_and_where($temp_field_suffix);
+            
+                $row = $this->db_fetch($this->db_query("SELECT *, {$this->table}.{$this->primary} AS dbEdit_primary_key{$wt->fields}
+                                                            FROM {$wt->tables}
+                                                            ".($wt->where ? " WHERE {$wt->where} AND " : 'WHERE')."{$this->table}.{$this->primary} = {$id}
+                                                            ".$this->sql_condition($this->allow_del_sql_condition)));
+                $output .= '<table id="'.$attr_prefix.'table"'.($this->outer_classes['dc'] ? ' class="'.$this->html($this->outer_classes['dc'], $charset).'"' : '').'><tbody>';
+                foreach($this->cols as $field => $col) {
+                    if ($this->displayable($col)) {
+                        $output .= "<tr><td>{$col['name']}</td><td>{$this->output($row, $temp_field_suffix, $field, $col, $charset)}</td></tr>";
                     }
-                    $output .= '</tbody></table>
-                    <form action="'.$this->dbEdit_url(null, true, false).'" method="post"'.($this->outer_classes['dc'] ? ' class="'.$this->html($this->outer_classes['dc'], $charset).'"' : '').'>
-                        <input type="hidden" name="dbedit" value="'.$this->uniqid.'" />
-                        <input type="hidden" name="'.$this->id_param.'" value="'.$id.'" />
-                        <button type="submit" name="'.$this->action_param.'" value="d">Delete</button>
-                        '.str_replace('[+name+]', $this->action_param, str_replace('[+url+]', $this->dbEdit_url(null, true), $this->cancel_html)).'
-                    </form>';
+                }
+                $output .= '</tbody></table>
+                <form action="'.$this->dbEdit_url(null, true, false).'" method="post"'.($this->outer_classes['dc'] ? ' class="'.$this->html($this->outer_classes['dc'], $charset).'"' : '').'>
+                    <input type="hidden" name="dbedit" value="'.$this->uniqid.'" />
+                    <input type="hidden" name="'.$this->id_param.'" value="'.$id.'" />
+                    <button type="submit" name="'.$this->action_param.'" value="d">Delete</button>
+                    '.str_replace('[+name+]', $this->action_param, str_replace('[+url+]', $this->dbEdit_url(null, true), $this->cancel_html)).'
+                </form>';
                 break;
             
             case 'd':
