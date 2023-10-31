@@ -90,7 +90,7 @@ class dbEdit {
         $this->table = $table;
         $this->primary = $primary;
         $this->cols = $cols;
-        $this->uniqid = uniqid(null, true);
+        $this->uniqid = uniqid('', true);
         $this->where = $where;
         $this->atime = time();
     }
