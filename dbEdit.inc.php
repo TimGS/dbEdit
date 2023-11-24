@@ -698,7 +698,7 @@ class dbEdit {
             
                 $row = $this->db_fetch($this->db_query("SELECT *, {$this->table}.{$this->primary} AS dbEdit_primary_key{$wt->fields}
                                                             FROM {$wt->tables}
-                                                            ".($wt->where ? " WHERE {$wt->where} AND " : 'WHERE')."{$this->table}.{$this->primary} = {$id}
+                                                            ".($wt->where ? " WHERE {$wt->where} AND " : 'WHERE ')."{$this->table}.{$this->primary} = {$id}
                                                             ".$this->sql_condition($this->allow_del_sql_condition)));
                 $output .= '<table id="'.$attr_prefix.'table"'.($this->outer_classes['dc'] ? ' class="'.$this->html($this->outer_classes['dc'], $charset).'"' : '').'><tbody>';
                 foreach($this->cols as $field => $col) {
