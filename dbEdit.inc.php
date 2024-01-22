@@ -550,7 +550,7 @@ class dbEdit {
                                 $fields[] = $post_field.'=1';
                             } elseif(isset($this->cols[$post_field]['input_date'])) {
                                 // Convert date input format to MySQL format
-                                $fields[] = $post_field.'="'.$this->parse_input_date($value, $this->cols[$post_field]['input_date'], (@$col['type'] == 'datetime')).'"';
+                                $fields[] = $post_field.'="'.$this->parse_input_date($value, $this->cols[$post_field]['input_date'], (isset($this->cols[$post_field]['type']) && $this->cols[$post_field]['type'] == 'datetime')).'"';
                             } else {
                                 // Anything else; use the POST element's escaped value
                                 $fields[] = $post_field.'="'.$this->db_escape($value).'"';
@@ -615,7 +615,7 @@ class dbEdit {
                             } elseif(isset($this->cols[$post_field]['input_date'])) {
                                 // Convert date input format to MySQL format
                                 $fields[] = $post_field;
-                                $values[] = '"'.$this->parse_input_date($value, $this->cols[$post_field]['input_date'], (@$col['type'] == 'datetime')).'"';
+                                $values[] = '"'.$this->parse_input_date($value, $this->cols[$post_field]['input_date'], (isset($this->cols[$post_field]['type']) && $this->cols[$post_field]['type'] == 'datetime')).'"';
                             } else {
                                 // Anything else; use the POST element's escaped value
                                 $fields[] = $post_field;
