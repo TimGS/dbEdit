@@ -232,8 +232,12 @@ class dbEdit {
     /**
      * HTML output
      */
-    private function html($val, $charset, $no_esc = false) {
-        return $no_esc ? $val : htmlentities($val, ENT_QUOTES, $charset);
+    private function html(?string $val, string $charset, bool $no_esc = false): string {
+        if (is_null($val)) {
+            return '';
+        } else {
+            return $no_esc ? $val : htmlentities($val, ENT_QUOTES, $charset);
+        }
     }
     
     /**
