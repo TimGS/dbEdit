@@ -30,7 +30,8 @@
     font-family: inherit;
     }
 
-#dbEditPrefixform > div {
+#dbEditPrefixform > div,
+#dbEditPrefixform > fieldset > div {
     margin: 1em 0;
     clear: left;
     }
